@@ -1,50 +1,61 @@
-# Muck-Up Assembly Coordination App
+# Assembly Desk project plan
 
-## Problem and proposed approach
+Assembly Desk is a prototype for coordinating a school assembly, from gathering ideas through preparing a running order and following a show-day sheet. This plan reflects the current codebase; the app is not yet a shared or production-ready service.
 
-The tech crew, performers/presenters, and teachers/organisers need one shared place to turn ideas into an organised assembly over the coming year, then use that information to run the event reliably. The app should evolve from collaborative planning into a clear show-day runbook.
+## Current status
 
-## Suggested first version
+The current Vite + React + TypeScript prototype includes:
 
-- **Idea board:** collect suggestions with a short description, owner, status, and comments; allow organisers to mark ideas for follow-up or decision.
-- **Shared plan and decisions:** record key choices, responsibilities, and dates so decisions and next steps do not get lost in chat.
-- **Task list:** assign preparation tasks, due dates, and simple statuses; include a checklist for AV and stage preparation.
-- **Draft running order:** list acts or segments, approximate duration, transition notes, and the people responsible. Keep it editable while planning.
-- **AV cue notes:** associate audio, lighting, and video cues with each segment. Capture cue owner and the asset or equipment needed.
-- **Change announcements:** show a visible recent-changes feed, with changes to the running order and cues clearly marked.
-- **Show-day view (later MVP phase):** a simplified, ordered run sheet with cue details and a way to mark segments complete. Keep it readable on a phone and a laptop.
+- An overview of the fictional sample event and planning progress.
+- An idea board where users can add ideas, comment, and change idea status.
+- A grouped preparation task list with completion checkboxes.
+- A draft running order with sample cue notes and the ability to add segments and durations.
+- A separate, fixed sample show-day sheet with completion checkboxes and print support.
+- Browser-local persistence for demo edits and a reset control.
 
-## Scope and considerations
+All saved state is limited to the current browser profile and device. There are no accounts, roles, shared data, server-side storage, or approval/publishing workflow. The show-day sheet is not generated from the editable draft.
 
-- Treat the app as a shared coordination workspace for the three groups, with appropriate edit rights for organisers and contributors; do not assume every participant should be able to change the final run sheet.
-- Avoid storing sensitive personal information. Use names or roles only where needed for task ownership and cue responsibility.
-- Keep planning records distinct from the approved show-day version so late edits do not silently change what the crew is following.
-- Build a responsive website first so it works on school laptops and phones without app-store installation. Make it installable as a PWA only if the basic site is working and there is a clear benefit.
-- Advanced features such as complex approval workflows, inventory databases, and integrations can wait until the team has tested the core process.
+## Proposed next phases
 
-## Recommended build and publishing approach
+### 1. Review the workflow and constraints
 
-1. **Get school approval first.** Ask a teacher or IT contact which hosting, sign-in, and data-storage services are allowed. A public website URL can still have private, sign-in-protected content; do not make the planning board publicly readable.
-2. **Prototype before coding the whole app.** Sketch the main screens and test the workflow with one example idea, task, running-order segment, and AV cue. Keep the first release small.
-3. **Use a familiar web stack.** A reasonable starting point for someone with some HTML/CSS/JavaScript experience is React with TypeScript and Vite for the site. Use a managed backend such as Supabase for sign-in and database only if the school approves it; configure database row-level security so users cannot read or change records they are not permitted to access. Host the site on a static web host such as Vercel or an approved school platform. Check current terms, pricing, and age/account requirements before choosing services.
-4. **Build in stages.** First implement sign-in, the idea board, decisions, and tasks. Then add the draft running order and cues, followed by organiser approval and a published show-day view. Use sample content until access rules are tested.
-5. **Test permissions and usability.** Check the app on phones and school laptops. Test as an organiser and a contributor, including that unauthorised people cannot access private data and that a published run sheet remains distinct from drafts.
-6. **Publish carefully.** Deploy a preview for the teacher/organisers to review, fix issues, then publish the production URL. Share it only with the intended group, use school-approved accounts, avoid sensitive personal details, and retain a printable/offline run-sheet backup. Recheck the data and access rules before real event details are entered.
-7. **Maintain it through the year.** Assign an owner, document how to update the app, periodically review access, and decide when to archive or delete event information after the assembly.
+- Ask a teacher or school IT contact what hosting, accounts, and data storage are permitted before selecting a backend or publishing the app.
+- Confirm who will use the app, who can edit planning information, and who approves the final run sheet.
+- Validate the planning workflow with representatives of organisers, performers/presenters, and the tech crew.
+- Keep using fictional data while the prototype is being evaluated.
 
-The backend and hosting providers are suggestions, not assumptions: the school’s policy and account requirements take priority. Avoid putting real student names, private contact details, or sensitive material in a prototype or public repository.
+### 2. Improve the planning prototype
 
-## Todos
+- Make the draft running order easier to manage, including editing, removing, and reordering segments.
+- Capture and update segment leads, cue details, and cue owners rather than using sample/default values.
+- Add task creation and editing if the team needs tasks to be maintained in the app.
+- Make decisions and change history clearly distinguishable from sample content.
+- Keep draft planning data separate from any approved show-day version.
 
-1. Confirm school approval, allowed accounts/hosting, and the minimum data the app needs.
-2. Map the year-long planning workflow from ideas through decisions, tasks, and rehearsal.
-3. Prototype the core screens and test the workflow with representatives of all three groups.
-4. Define the data model, sign-in, roles, and access rules before entering real event information.
-5. Build the idea board, decisions, and tasks; then add the running order, AV cues, and approval/publishing.
-6. Test usability, permissions, and published-versus-draft behavior on school devices.
-7. Deploy a preview, get organiser approval, and publish using an approved host and account setup.
-8. Assign maintenance ownership and a post-event data retention/deletion plan.
+### 3. Agree on secure collaboration before implementation
 
-## Notes
+- Choose school-approved sign-in, hosting, and data storage only after the school confirms requirements.
+- Define roles and access rules for contributors, organisers, and people responsible for show-day operation.
+- Design the data model and test that users can only access and change the information they are permitted to.
+- Decide what information is necessary, how long it should be retained, and how it will be removed after the event.
 
-No codebase or implementation target has been selected yet. This is a build-and-publish plan, not an instruction to start coding.
+### 4. Build and verify a shared version
+
+- Add approved authentication and shared persistence.
+- Implement collaboration, task ownership, and an organiser review/approval flow.
+- Generate the published show-day sheet from an approved draft, with a clear way to identify the published version.
+- Test permissions, draft-versus-published behavior, printing, and responsive layouts on school devices.
+- Keep an offline or printed run-sheet backup for event day.
+
+### 5. Pilot, publish, and maintain
+
+- Deploy a private preview using an approved host and account setup.
+- Have organisers review the workflow and access controls before entering real event information.
+- Publish only to the intended audience; do not make planning information publicly readable.
+- Assign an owner for maintenance, access reviews, and post-event archiving or deletion.
+
+## Out of scope for now
+
+- Real student or staff information, confidential details, or other real event data in this local demo.
+- Public hosting or use as a shared planning tool without school approval and appropriate access controls.
+- Complex approval workflows, inventory management, external integrations, and a PWA until the core shared workflow is validated.

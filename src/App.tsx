@@ -1,4 +1,4 @@
-import { useState, type Dispatch, type FormEvent, type ReactNode, type SetStateAction } from "react";
+import { useEffect, useRef, useState, type Dispatch, type FormEvent, type ReactNode, type SetStateAction } from "react";
 
 type View = "overview" | "ideas" | "tasks" | "running-order" | "show-day";
 type Idea = {
@@ -83,16 +83,111 @@ const publishedSegments = [
   { title: "Thank you & dismissal", lead: "Assembly hosts", time: "9:23", cue: "Closing slide · house lights up" },
 ];
 
+const storageKey = "assembly-desk-demo-v1";
+
+type SavedState = {
+  ideas: Idea[];
+  tasks: Task[];
+  segments: Segment[];
+  completedShowItems: number[];
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isText(value: unknown, maxLength: number): value is string {
+  return typeof value === "string" && value.trim().length > 0 && value.length <= maxLength;
+}
+
+function isSavedIdea(value: unknown): value is Idea {
+  return isRecord(value)
+    && typeof value.id === "number"
+    && Number.isFinite(value.id)
+    && isText(value.title, 70)
+    && isText(value.description, 240)
+    && isText(value.author, 60)
+    && isIdeaStatus(String(value.status))
+    && Array.isArray(value.comments)
+    && value.comments.length <= 50
+    && value.comments.every((comment) => isText(comment, 180));
+}
+
+function isSavedTask(value: unknown): value is Task {
+  return isRecord(value)
+    && typeof value.id === "number"
+    && Number.isFinite(value.id)
+    && isText(value.title, 100)
+    && isText(value.owner, 60)
+    && isText(value.due, 40)
+    && typeof value.done === "boolean"
+    && (value.group === "Stage" || value.group === "AV" || value.group === "Program");
+}
+
+function isSavedSegment(value: unknown): value is Segment {
+  return isRecord(value)
+    && typeof value.id === "number"
+    && Number.isFinite(value.id)
+    && isText(value.title, 70)
+    && isText(value.lead, 60)
+    && typeof value.minutes === "number"
+    && Number.isInteger(value.minutes)
+    && value.minutes >= 1
+    && value.minutes <= 60
+    && isText(value.cue, 180)
+    && isText(value.cueOwner, 60);
+}
+
+function isSavedState(value: unknown): value is SavedState {
+  return isRecord(value)
+    && value.version === 1
+    && Array.isArray(value.ideas)
+    && value.ideas.length <= 200
+    && value.ideas.every(isSavedIdea)
+    && Array.isArray(value.tasks)
+    && value.tasks.length <= 200
+    && value.tasks.every(isSavedTask)
+    && Array.isArray(value.segments)
+    && value.segments.length <= 100
+    && value.segments.every(isSavedSegment)
+    && Array.isArray(value.completedShowItems)
+    && value.completedShowItems.every((item) => Number.isInteger(item) && item >= 0 && item < publishedSegments.length);
+}
+
+function readSavedState(): { data: SavedState | null; error: string | null; clearInvalid: boolean } {
+  let saved: string | null;
+  try {
+    saved = localStorage.getItem(storageKey);
+  } catch (error) {
+    console.error("Could not read local demo data.", error);
+    return { data: null, error: "Browser storage is unavailable. Changes may not be saved on this device.", clearInvalid: false };
+  }
+  if (saved === null) return { data: null, error: null, clearInvalid: false };
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(saved);
+  } catch {
+    return { data: null, error: "Saved demo data was invalid, so the sample content has been restored.", clearInvalid: true };
+  }
+
+  if (isSavedState(parsed)) return { data: parsed, error: null, clearInvalid: false };
+  return { data: null, error: "Saved demo data was invalid, so the sample content has been restored.", clearInvalid: true };
+}
+
 function isIdeaStatus(value: string): value is Idea["status"] {
   return value === "For discussion" || value === "Shortlisted" || value === "In the plan";
 }
 
 function App() {
+  const [savedState] = useState(readSavedState);
   const [view, setView] = useState<View>("overview");
-  const [ideas, setIdeas] = useState(initialIdeas);
-  const [tasks, setTasks] = useState(initialTasks);
-  const [segments, setSegments] = useState(initialSegments);
-  const [completedShowItems, setCompletedShowItems] = useState<number[]>([]);
+  const [storageError, setStorageError] = useState(savedState.error);
+  const clearInvalidSavedState = useRef(savedState.clearInvalid);
+  const [ideas, setIdeas] = useState(() => savedState.data?.ideas ?? initialIdeas);
+  const [tasks, setTasks] = useState(() => savedState.data?.tasks ?? initialTasks);
+  const [segments, setSegments] = useState(() => savedState.data?.segments ?? initialSegments);
+  const [completedShowItems, setCompletedShowItems] = useState(() => savedState.data?.completedShowItems ?? []);
   const [ideaTitle, setIdeaTitle] = useState("");
   const [ideaDescription, setIdeaDescription] = useState("");
   const [commentDrafts, setCommentDrafts] = useState<Record<number, string>>({});
@@ -101,6 +196,37 @@ function App() {
 
   const completedTasks = tasks.filter((task) => task.done).length;
   const totalMinutes = segments.reduce((total, segment) => total + segment.minutes, 0);
+
+  useEffect(() => {
+    try {
+      if (clearInvalidSavedState.current) {
+        localStorage.removeItem(storageKey);
+        clearInvalidSavedState.current = false;
+      }
+      localStorage.setItem(storageKey, JSON.stringify({
+        version: 1,
+        ideas,
+        tasks,
+        segments,
+        completedShowItems,
+      }));
+      setStorageError((current) => current?.startsWith("Browser storage is unavailable") ? null : current);
+    } catch (error) {
+      console.error("Could not save local demo data.", error);
+      setStorageError(clearInvalidSavedState.current
+        ? "Saved demo data was invalid and could not be cleared. Use Reset demo to try again."
+        : "Browser storage is unavailable. Changes may not be saved on this device.");
+    }
+  }, [ideas, tasks, segments, completedShowItems]);
+
+  function resetDemo() {
+    if (!window.confirm("Reset locally saved demo edits and restore the original sample content?")) return;
+    setStorageError(null);
+    setIdeas(initialIdeas);
+    setTasks(initialTasks);
+    setSegments(initialSegments);
+    setCompletedShowItems([]);
+  }
 
   function addIdea(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -191,9 +317,10 @@ function App() {
       <main className="main-content">
         <header className="topbar">
           <div className="breadcrumb">End of year assembly <span>/</span> {navItems.find((item) => item.id === view)?.label}</div>
-          <div className="topbar-actions"><span className="prototype-badge"><span /> DEMO DATA</span><button className="avatar-button" aria-label="Your profile">Y</button></div>
+          <div className="topbar-actions"><span className="prototype-badge"><span /> LOCAL DEMO</span><button className="reset-demo-button" onClick={resetDemo}>Reset demo</button></div>
         </header>
-        <div className="page-content">
+        <div className={`page-content ${view === "show-day" ? "show-day-page" : ""}`}>
+          {storageError && <div className="storage-warning" role="status">{storageError}</div>}
           {view === "overview" && <Overview completedTasks={completedTasks} taskCount={tasks.length} ideas={ideas} segments={segments} setView={setView} />}
           {view === "ideas" && (
             <IdeasPage ideas={ideas} title={ideaTitle} description={ideaDescription} commentDrafts={commentDrafts} setTitle={setIdeaTitle} setDescription={setIdeaDescription} setCommentDrafts={setCommentDrafts} onSubmit={addIdea} onComment={addComment} onStatusChange={updateIdeaStatus} />
@@ -201,7 +328,7 @@ function App() {
           {view === "tasks" && <TasksPage tasks={tasks} onToggle={toggleTask} />}
           {view === "running-order" && <RunningOrderPage segments={segments} totalMinutes={totalMinutes} title={segmentTitle} minutes={segmentMinutes} setTitle={setSegmentTitle} setMinutes={setSegmentMinutes} onSubmit={addSegment} />}
           {view === "show-day" && <ShowDayPage completed={completedShowItems} onToggle={toggleShowItem} />}
-          <footer className="page-footer"><span>Assembly Desk <span className="footer-dot">·</span> Local prototype</span><span>Sample content only <span className="footer-dot">·</span> Nothing is saved</span></footer>
+          <footer className="page-footer"><span>Assembly Desk <span className="footer-dot">·</span> Local prototype</span><span>Fictional demo data <span className="footer-dot">·</span> Saved in this browser only</span></footer>
         </div>
       </main>
     </div>
@@ -298,13 +425,15 @@ function ShowDayPage({ completed, onToggle }: { completed: number[]; onToggle: (
   const doneCount = completed.length;
   return (
     <>
-      <PageHeading eyebrow="PUBLISHED · SHOW DAY" title={<>You’ve got <em>this.</em></>} description="The agreed running order, ready for the crew. Clear cues, one step at a time." action={<span className="published-tag"><span /> PUBLISHED SAMPLE</span>} />
+      <PageHeading eyebrow="PUBLISHED · SHOW DAY" title={<>You’ve got <em>this.</em></>} description="The agreed running order, ready for the crew. Clear cues, one step at a time." action={<button className="button button-dark print-button no-print" onClick={() => window.print()}>Print sheet <span>↗</span></button>} />
+      <div className="showday-printable">
       <section className="showday-banner"><div><span className="banner-label"><span /> FRIDAY, 20 NOVEMBER</span><h2>End of year assembly</h2><p>Main hall <span>·</span> Crew call 8:30 am <span>·</span> Doors 8:55 am</p></div><div className="showday-ready"><span>{doneCount}/{publishedSegments.length}</span><small>SEGMENTS DONE</small></div></section>
       <div className="showday-note"><span>ℹ</span><span><strong>This is a published sample.</strong> Draft changes do not update this run sheet.</span></div>
       <section className="panel published-panel"><div className="panel-heading"><div><h2>Today’s running order</h2><p>Tap a segment to mark it complete during the show.</p></div><span className="filter-label">9:00 – 9:30 AM</span></div>
         <div className="published-list">{publishedSegments.map((segment, index) => <button className={`published-row ${completed.includes(index) ? "published-done" : ""}`} key={segment.title} onClick={() => onToggle(index)}><span className="published-check">{completed.includes(index) ? "✓" : ""}</span><span className="published-time">{segment.time}</span><span className="published-info"><strong>{segment.title}</strong><small>{segment.lead}<span> · </span><i>{segment.cue}</i></small></span><span className="published-row-arrow">{completed.includes(index) ? "Done" : "○"}</span></button>)}</div>
       </section>
-      <div className="print-note"><span>⌁</span> Keep a printed copy nearby as a backup. This prototype does not save progress.</div>
+      <div className="print-note"><span>⌁</span> Keep a printed copy nearby as a backup. This is a fictional prototype run sheet.</div>
+      </div>
     </>
   );
 }

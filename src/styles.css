@@ -453,3 +453,42 @@ h1 em { color: #607854; font-style: normal; }
   .nav-mark { width: 18px; height: 18px; font-size: 8px; }
   .page-footer { font-size: 9px; }
 }
+
+.topbar-actions { gap: 12px; }
+.reset-demo-button { padding: 7px 10px; border: 1px solid #e5e7df; border-radius: 5px; background: #fff; color: #65745c; cursor: pointer; font-size: 10px; font-weight: 600; }
+.reset-demo-button:hover { border-color: #cbd5c3; background: #f8faf6; }
+.storage-warning { margin-bottom: 14px; padding: 10px 13px; border: 1px solid #eadbb7; border-radius: 6px; background: #fbf7eb; color: #75633b; font-size: 11px; }
+.print-button { min-width: 120px; }
+.showday-printable { display: grid; gap: 12px; }
+
+@media print {
+  @page { size: auto; margin: 14mm; }
+  html, body, #root, .app-shell, .main-content { width: 100%; min-width: 0; min-height: 0; margin: 0; padding: 0; background: #fff !important; }
+  .sidebar, .topbar, .page-footer, .storage-warning, .page-heading, .no-print { display: none !important; }
+  .page-content.show-day-page { max-width: none; margin: 0; padding: 0 !important; }
+  .show-day-page > :not(.showday-printable) { display: none !important; }
+  .showday-printable { display: block; color: #171914; }
+  .showday-banner { margin-bottom: 10mm; padding: 0 0 6mm; border-bottom: 2px solid #536a48; border-radius: 0; background: #fff !important; color: #171914; }
+  .showday-banner .banner-label { color: #526b47; }
+  .showday-banner .banner-label > span { background: #526b47; box-shadow: none; }
+  .showday-banner h2 { margin: 4mm 0 2mm; color: #171914; font-size: 22pt; }
+  .showday-banner p { color: #41443d; font-size: 11pt; }
+  .showday-banner p span { color: #7b7e75; }
+  .showday-ready { border-color: #aeb8a7; color: #171914; }
+  .showday-ready small { color: #526b47; }
+  .showday-note { margin: 0 0 5mm; border-color: #dadfd5; background: #f5f7f2 !important; color: #41443d; font-size: 10pt; }
+  .published-panel { padding: 0; border: 0; background: #fff; }
+  .published-panel .panel-heading { margin-bottom: 3mm; }
+  .published-panel .panel-heading h2 { color: #171914; font-size: 15pt; }
+  .published-panel .panel-heading p { color: #55584f; font-size: 10pt; }
+  .published-panel .filter-label { color: #41443d; font-size: 9pt; }
+  .published-list { margin: 0; }
+  .published-row { min-height: 16mm; break-inside: avoid; border-bottom: 1px solid #d9dcd4; color: #171914; }
+  .published-check, .published-row-arrow { display: none; }
+  .published-time { width: 17mm; flex-basis: 17mm; color: #3d4938; font-size: 10pt; }
+  .published-info strong { color: #171914; font-size: 11pt; }
+  .published-info small { overflow: visible; color: #484b43; font-size: 9pt; white-space: normal; }
+  .published-info small i { color: #41443d; }
+  .published-done .published-info strong { color: #171914; text-decoration: none; }
+  .print-note { margin-top: 7mm; color: #55584f; font-size: 9pt; }
+}

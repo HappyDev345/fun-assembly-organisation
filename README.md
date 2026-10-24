@@ -19,6 +19,9 @@ npm run build
 
 ## Prototype notes
 
-- Ideas, task checkboxes, draft segments, and show-day completion marks are held in memory. Refreshing the page restores the sample content.
+- Ideas, comments, task checkboxes, draft segments, and show-day completion marks are saved in this browser only. They persist across refreshes on the same browser profile and device.
+- Use **Reset demo** in the top bar to restore the original sample data. Resetting removes your local demo edits.
 - The editable draft running order is separate from the fixed published sample show-day sheet.
+- Open **Show-day sheet** and choose **Print sheet** to print or save a PDF. The print view hides navigation and controls.
+- Browser-local data is not shared, backed up, or appropriate for confidential or real event information. Clearing browser site data also removes it.
 - Use fictional information only. Authentication, permissions, school-approved hosting, and real event data are deliberately out of scope until approved by the school.
